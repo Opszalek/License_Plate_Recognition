@@ -4,7 +4,7 @@ import os
 import math
 
 #import images from images folder
-path = "/home/opszalek/PycharmProjects/SW_projekt/images/plk"
+path = "/home/opszalek/PycharmProjects/SW_projekt/images"
 path = os.path.abspath(path)
 images = []
 tablice = []
@@ -16,7 +16,7 @@ def import_images():
             images.append(img)
 def resize_images():
     img_resized = []
-    scale_percent = 30  # percent of original size
+    scale_percent = 25  # percent of original size
     for img in images:
         width = int(img.shape[1] * scale_percent / 100)
         height = int(img.shape[0] * scale_percent / 100)
@@ -27,17 +27,13 @@ def resize_images():
 
 #find contours on images
 def area_of_rectqngle(points):
-    return abs(points[1][0][0] - points[0][0][0]) * abs(points[2][0][1] - points[0][0][1])
+    #np.array([left[0],right[0],left[1],right[1]], dtype=np.float32)
+    print(points)
+    return abs(points[2][0][0] - points[0][0][0]) * abs(points[2][0][1] - points[0][0][1])
 def find_contours_test(image):
-    # konwersja obrazu na skale szarosci
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
     thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 45, 2)
-
     contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    # contours = [cnt for cnt in contours if cv2.contourArea(cnt) > 5000]
-
     contours_ = [cnt for cnt in contours if len(cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)) == 4]
     contours_ = [cnt for cnt in contours_ if cv2.contourArea(cnt) > 30000]
     img_wide = image.shape[1]
@@ -54,13 +50,34 @@ def find_contours_test(image):
     tablica = None
     for temmp_tablica in tablice:
         cv2.drawContours(image, [temmp_tablica], 0, (0, 255, 255), 2)
-
         if tablica is not None:
             if area_of_rectqngle(temmp_tablica) < area_of_rectqngle(tablica):
                 tablica = temmp_tablica
                 continue
         tablica = temmp_tablica
-    cv2.drawContours(image, [tablica], 0, (0, 0, 255), 2)
+    if tablica is not None:
+        cv2.drawContours(image, [tablica], 0, (0, 0, 255), 2)
+        points = zwracanie_rogow(tablica)
+
+        width = 1200
+        height = 300
+
+        dst_points = np.array([[0, 0], [width, 0], [0, height], [width, height]], dtype=np.float32)
+        # src_points = np.array([point[0] for point in cnt], dtype=np.float32)
+        M = cv2.getPerspectiveTransform(points, dst_points)
+        warped = cv2.warpPerspective(image, M, (int(width), int(height)))
+        #cv2.imshow("Warped Image", warped)
+        #cv2.waitKey(0)
+        # # utwórz maskę i wypełnij kontur białą barwą
+        # mask = np.zeros(image.shape[:2], dtype=np.uint8)
+        # cv2.fillPoly(mask, [tablica], (255, 255, 255))
+        #
+        # # zastosuj maskę do oryginalnego obrazu
+        # result = cv2.bitwise_and(image, image, mask=mask)
+        #
+        # # wyświetl wynik
+        # cv2.imshow('result', result)
+        # cv2.waitKey(0)  #######################genialne wycinania
 
 
     #sort contours by area
@@ -170,6 +187,7 @@ def zwracanie_rogow(contour):
     right=x[2:]
     left=sorted(left, key=lambda x: x[0][1])
     right=sorted(right, key=lambda x: x[0][1])
+
     return np.array([left[0],right[0],left[1],right[1]], dtype=np.float32)
 
 
