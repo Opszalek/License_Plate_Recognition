@@ -4,7 +4,7 @@ import os
 import math
 
 #import images from images folder
-path = "/home/opszalek/PycharmProjects/SW_projekt/images"
+path = "/home/opszalek/PycharmProjects/SW_projekt/images/plk"
 path = os.path.abspath(path)
 images = []
 tablice = []
@@ -26,6 +26,8 @@ def resize_images():
     return img_resized
 
 #find contours on images
+def area_of_rectqngle(points):
+    return abs(points[1][0][0] - points[0][0][0]) * abs(points[2][0][1] - points[0][0][1])
 def find_contours_test(image):
     # konwersja obrazu na skale szarosci
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -38,6 +40,33 @@ def find_contours_test(image):
 
     contours_ = [cnt for cnt in contours if len(cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)) == 4]
     contours_ = [cnt for cnt in contours_ if cv2.contourArea(cnt) > 30000]
+    img_wide = image.shape[1]
+    tablice = []
+    for cnt in contours_:
+
+        approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)
+        if len(approx) == 4:
+            points = zwracanie_rogow(approx)
+            if points[1][0][0]-points [0][0][0]> 0.2* img_wide:
+                if 3 < ((points[1][0][0]-points [0][0][0]) / (points[2][0][1]-points [0][0][1])) <6 or \
+                        3 < ((points[1][0][0]-points [0][0][0]) / (points[3][0][1]-points [1][0][1])) <6:
+                    tablice.append(approx)
+    tablica = None
+    for temmp_tablica in tablice:
+        cv2.drawContours(image, [temmp_tablica], 0, (0, 255, 255), 2)
+
+        if tablica is not None:
+            if area_of_rectqngle(temmp_tablica) < area_of_rectqngle(tablica):
+                tablica = temmp_tablica
+                continue
+        tablica = temmp_tablica
+    cv2.drawContours(image, [tablica], 0, (0, 0, 255), 2)
+
+
+    #sort contours by area
+    # contours_ = sorted(contours_, key=cv2.contourArea, reverse=True)
+    # contours_= contours_[-1]
+
     # for cnt in contours_:
     #     # Approximate the contour to a polygon with 4 vertices
     #     approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)
@@ -50,13 +79,14 @@ def find_contours_test(image):
     #     cnt = contours_[0]
     #     approx = cv2.approxPolyDP(cnt, 0.04 * cv2.arcLength(cnt, True), True)
     #     points=zwracanie_rogow(approx)
-    #     print(points[3])
-    #     width = points[0][0][0] - points[1][0][0]
-    #     height = points[2][0][1] - points[1][0][1]
-    #     dst_points = np.array([[0, 0], [width, 0], [width, height], [0, height]], dtype=np.float32)
+    #
+    #     width = 1200
+    #     height = 300
+    #
+    #     dst_points = np.array([[0, 0], [width, 0], [0, height], [width, height]], dtype=np.float32)
     #     #src_points = np.array([point[0] for point in cnt], dtype=np.float32)
     #     M = cv2.getPerspectiveTransform(points, dst_points)
-    #     warped = cv2.warpPerspective(image, M, (width, height))
+    #     warped = cv2.warpPerspective(image, M, (int(width), int(height)))
     #     cv2.imshow("Warped Image", warped)
     #     cv2.waitKey(0)
     #     # utwórz maskę i wypełnij kontur białą barwą
@@ -94,7 +124,7 @@ def find_contours_test(image):
     #         cv2.imshow("imag", image)
     #
     # cv2.drawContours(image, contours, -1, (0, 255, 255), 3)
-    cv2.drawContours(image, contours_, -1, (0, 255, 0), 3)
+    #cv2.drawContours(image, contours_, -1, (0, 255, 0), 3)
     cv2.imshow("img", image)
     cv2.waitKey(0)
 def find_contours(image):
@@ -117,23 +147,33 @@ def find_contours(image):
     cv2.imshow("img", image)
     cv2.waitKey(0)
 def zwracanie_rogow(contour):
-    M = cv2.moments(contour)
-    cx = int(M["m10"] / M["m00"])
-    cy = int(M["m01"] / M["m00"])
-    corners = []
-    for point in contour:
-        distance = ((point[0][0] - cx) ** 2 + (point[0][1] - cy) ** 2) ** 0.5
-        corners.append((point, distance))
-    corners.sort(key=lambda x: x[1], reverse=True)
-    sorted_corners = [corner[0] for corner in corners[:4]]
-    sorted_corners.sort(key=lambda x: x[0][0])
-    if sorted_corners[0][0][1] > sorted_corners[1][0][1]:
-        sorted_corners[0], sorted_corners[1] = sorted_corners[1], sorted_corners[0]
-    sorted_corners.sort(key=lambda x: x[0][1])
-    if sorted_corners[2][0][1] > sorted_corners[3][0][1]:
-        sorted_corners[2], sorted_corners[3] = sorted_corners[3], sorted_corners[2]
-    return sorted_corners
+    # M = cv2.moments(contour)
+    # cx = int(M["m10"] / M["m00"])
+    # cy = int(M["m01"] / M["m00"])
+    # corners = []
+    #
+    # for point in contour:
+    #
+    #     distance = ((point[0][0] - cx) ** 2 + (point[0][1] - cy) ** 2) ** 0.5
+    #     corners.append((point, distance))
+    # corners.sort(key=lambda x: x[1], reverse=True)
+    # sorted_corners = [corner[0] for corner in corners[:4]]
+    # sorted_corners.sort(key=lambda x: x[0][0])
+    # if sorted_corners[0][0][1] > sorted_corners[1][0][1]:
+    #     sorted_corners[0], sorted_corners[1] = sorted_corners[1], sorted_corners[0]
+    # sorted_corners.sort(key=lambda x: x[0][1])
+    # if sorted_corners[2][0][1] > sorted_corners[3][0][1]:
+    #     sorted_corners[2], sorted_corners[3] = sorted_corners[3], sorted_corners[2]
+    # return np.array(sorted_corners, dtype=np.float32)
+    x=sorted(contour, key=lambda x: x[0][0])
+    left=x[:2]
+    right=x[2:]
+    left=sorted(left, key=lambda x: x[0][1])
+    right=sorted(right, key=lambda x: x[0][1])
+    return np.array([left[0],right[0],left[1],right[1]], dtype=np.float32)
 
+
+    print(x)
 def canny_edge_detection(img):
 
     # Wczytaj obraz i przekonwertuj na odcienie szarości
@@ -178,7 +218,8 @@ def main():
     import_images()
     images = resize_images()
     for img in images:
-        find_contours(img)
+        #find_contours(img)
+        find_contours_test(img)
         #canny_edge_detection(img)
 
 
