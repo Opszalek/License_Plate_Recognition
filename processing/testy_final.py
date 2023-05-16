@@ -12,7 +12,7 @@ dictionary = []
 
 def import_images():
     for filename in os.listdir(path):
-        img = cv2.imread(os.path.join(path, filename))
+        img = cv2.imread(os.path.join(path, filename), cv2.IMREAD_GRAYSCALE)
         if img is not None:
             images.append(img)
 def import_letters():
@@ -67,8 +67,8 @@ def return_biggest(rect_list):
 def find_contours(images):
     plates = []
     for image in images:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 45, 2)
+        #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        thresh = cv2.adaptiveThreshold(image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 45, 2)
         contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         img_wide = image.shape[1]
         tablica = None
@@ -104,14 +104,14 @@ def find_contours(images):
 
 def find_letters(plates):
     for plate in plates:
-        gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray, 100, 200)
+        #gray = cv2.cvtColor(plate, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(plate, 100, 200)
         kernel = np.ones((3, 3), np.uint8)
         edges = cv2.dilate(edges, kernel, iterations=1)
         contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         letter=[]
         for cnt in contours:
-            if cv2.contourArea(cnt) > 1000 and cv2.boundingRect(cnt)[2] < plate.shape[1]/5:
+            if (cv2.contourArea(cnt) > 1000 and cv2.boundingRect(cnt)[2] < plate.shape[1]/5):
                 #cv2.drawContours(plate, [cnt], 0, (0, 255, 0), 3)
                 x, y, w, h = cv2.boundingRect(cnt)
                 #cv2.rectangle(plate, (x, y), (x + w, y + h), (0, 255, 0), 2)
@@ -131,37 +131,64 @@ def find_letters(plates):
 
         # cv2.imshow("img", plate)
         # cv2.waitKey(0)
-def compare_images(letters, dictionary,plate):
+def find_letters_1(image):
+    edges = cv2.Canny(image, 100, 200)
+    kernel = np.ones((3, 3), np.uint8)
+    edges = cv2.dilate(edges, kernel, iterations=1)
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    rectangles=[]
+    for cnt in contours:
+        if image.shape[1] > 100:
+            if (cv2.contourArea(cnt) > 1000 and cv2.boundingRect(cnt)[2] < image.shape[1] / 5):
+                x, y, w, h = cv2.boundingRect(cnt)
+                rectangles.append([x,y,x+w,y+h])
+        else:
+            x, y, w, h = cv2.boundingRect(cnt)
+            rectangles.append([x, y, x + w, y + h])
+    rectangles=return_biggest(rectangles)
+    letters=[]
+    for rect in rectangles:
+        letters.append(image[rect[1]:rect[3],rect[0]:rect[2]])
+
+    # for let in letters:
+    #     cv2.imshow("img", let)
+    #     cv2.waitKey(0)
+    #letter=compare_images(letter, dictionary,plate)
+    return letters
+
+
+    #print(letter)
+def compare_images(plate, dictionary):
     tablica = []
-    for letter in letters:
-        letter_image = plate[letter[1]:letter[3], letter[0]:letter[2]]
-        letter_gray = cv2.cvtColor(letter_image, cv2.COLOR_BGR2GRAY)
 
-        letter_gray = cv2.GaussianBlur(letter_gray, (5, 5), 0)
-
-        ret, letter_gray = cv2.threshold(letter_gray, 95, 255, cv2.THRESH_BINARY)
+    for letter in plate:
+        letter = cv2.GaussianBlur(letter, (5, 5), 0)
+        ret, letter = cv2.threshold(letter, 95, 255, cv2.THRESH_BINARY)
         kernel = np.ones((3, 3), np.uint8)
-        letter_gray = cv2.morphologyEx(letter_gray, cv2.MORPH_OPEN, kernel, iterations=2)
+        letter = cv2.morphologyEx(letter, cv2.MORPH_OPEN, kernel, iterations=2)
         best_match = None
         best_match_score = float('inf')
+        #absdiff
+        for t in dictionary:
+            for char in t:
+                char = cv2.resize(char, (letter.shape[1], letter.shape[0]))
 
-        for image in dictionary:
-            #resize image to letter_gray size
-            image = cv2.resize(image, (letter_gray.shape[1], letter_gray.shape[0]))
+                # score = cv2.matchShapes(char, letter, cv2.CONTOURS_MATCH_I1, 0)
+                diff = cv2.absdiff(char, letter)
+                score = np.sum(diff)
 
-            score = cv2.matchShapes(image, letter_gray, cv2.CONTOURS_MATCH_I1, 0)
-
-            if score < best_match_score:
-                best_match = image
-                best_match_score = score
+                if score < best_match_score:
+                    best_match = char
+                    best_match_score = score
         tablica.append(best_match)
+
         if best_match is not None:
 
             cv2.imshow("img", best_match)
-            cv2.imshow("img2", letter_image)
+            cv2.imshow("img2", letter)
             cv2.waitKey(0)
 
-    return tablica
+    #return tablica
 
 
 
@@ -173,7 +200,17 @@ def main():
     import_letters()
     images = resize_images()
     plates=find_contours(images)
-    find_letters(plates)
+    # find_letters(plates)
+    letters_vec=[]
+    plates_vec=[]
+    for le in dictionary:
+        letters_vec.append(find_letters_1(le))
+    for plate in plates:
+        plates_vec.append(find_letters_1(plate))
+    for plate in plates_vec:
+        compare_images(plate,letters_vec)
+
+
 
 
 
