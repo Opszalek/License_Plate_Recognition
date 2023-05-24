@@ -58,16 +58,14 @@ def find_contours_test(image):
     if tablica is not None:
         cv2.drawContours(image, [tablica], 0, (0, 0, 255), 2)
         points = zwracanie_rogow(tablica)
-
         width = 1200
         height = 300
-
         dst_points = np.array([[0, 0], [width, 0], [0, height], [width, height]], dtype=np.float32)
         # src_points = np.array([point[0] for point in cnt], dtype=np.float32)
         M = cv2.getPerspectiveTransform(points, dst_points)
         warped = cv2.warpPerspective(image, M, (int(width), int(height)))
-        #cv2.imshow("Warped Image", warped)
-        #cv2.waitKey(0)
+        cv2.imshow("Warped Image", warped)
+       # cv2.waitKey(0)
         # # utwórz maskę i wypełnij kontur białą barwą
         # mask = np.zeros(image.shape[:2], dtype=np.uint8)
         # cv2.fillPoly(mask, [tablica], (255, 255, 255))

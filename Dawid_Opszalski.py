@@ -9,7 +9,7 @@ from processing.utils import perform_processing
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('images', type=str)
+    parser.add_argument('images_dir', type=str)
     parser.add_argument('results_file', type=str)
     args = parser.parse_args()
 
