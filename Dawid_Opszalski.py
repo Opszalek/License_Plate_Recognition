@@ -16,7 +16,7 @@ def main():
     images_dir = Path(args.images_dir)
     results_file = Path(args.results_file)
 
-    images_paths = sorted([image_path for image_path in images_dir.iterdir() if image_path.name.endswith('.jpg')])
+    images_paths = sorted([image_path for image_path in images_dir.iterdir() if image_path.name.endswith('.jpg') or image_path.name.endswith('.JPG')])
     results = {}
     for image_path in images_paths:
         image = cv2.imread(str(image_path))

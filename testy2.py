@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import math
+import json
 
 #import images from images folder
 path = "/home/opszalek/PycharmProjects/SW_projekt/images"
@@ -229,15 +230,33 @@ def canny_edge_detection(img):
     #cv2.drawContours(img, contours_, -1, (0, 255, 0), 3)
     cv2.imshow("img", img)
     cv2.waitKey(0)
-
+def check_accuracy():
+    file_path = 'corect_results.json'
+    file = open(file_path, 'r')
+    data = json.load(file)
+    file_path = 'tablice.json'
+    file = open(file_path, 'r')
+    results = json.load(file)
+    correct = 0
+    all_letters = 0
+    for key, value in data.items():
+        print(1)
+        i = 0
+        for char in value:
+            if len(results[key])>i:
+                if char == results[key][i]:
+                    correct += 1
+            all_letters += 1
+            i+=1
+    print(correct/all_letters)
 def main():
-    import_images()
-    images = resize_images()
-    for img in images:
-        #find_contours(img)
-        find_contours_test(img)
-        #canny_edge_detection(img)
-
+    # import_images()
+    # images = resize_images()
+    # for img in images:
+    #     #find_contours(img)
+    #     find_contours_test(img)
+    #     #canny_edge_detection(img)
+    check_accuracy()
 
 
 
