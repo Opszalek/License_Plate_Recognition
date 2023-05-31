@@ -5,13 +5,13 @@ import os
 images = {}
 dictionary = {}
 
-def import_letters():
+def load_letters_from_directory():
     for i in os.listdir('/home/opszalek/PycharmProjects/SW_projekt/letters'):
         if (i.endswith(".png")):
             dictionary[i] = cv2.imread('/home/opszalek/PycharmProjects/SW_projekt/letters/' + i, cv2.IMREAD_GRAYSCALE)
 
 
-def resize_images(img):
+def resize_image(img):
     scale_percent = 1500 / img.shape[1] * 100
     width = int(img.shape[1] * scale_percent / 100)
     height = int(img.shape[0] * scale_percent / 100)
@@ -148,11 +148,11 @@ def compare_images(plate, dictionary):
 def perform_processing(image: np.ndarray) -> str:
     print(f'image.shape: {image.shape}')
     if len(dictionary) == 0:
-        import_letters()
+        load_letters_from_directory()
         for key, le in dictionary.items():
             dictionary[key] = find_letters(le, is_plate=True)
 
-    image = resize_images(image)
+    image = resize_image(image)
     plate = find_plate(image)
     letters = find_letters(plate)
     plate_text = compare_images(letters, dictionary)
