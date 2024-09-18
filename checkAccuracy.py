@@ -1,13 +1,19 @@
-
+import argparse
 import json
+from pathlib import Path
 
 def check_accuracy():
-    file_path = 'corect_results.json'
-    file = open(file_path, 'r')
-    data = json.load(file)
-    file_path = 'result.json'
-    file = open(file_path, 'r')
-    results = json.load(file)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('corect_results', type=str)
+    parser.add_argument('result', type=str)
+    args = parser.parse_args()
+
+    corect_results = Path(args.corect_results)
+    result = Path(args.result)
+    corect_results = open(corect_results, 'r')
+    data = json.load(corect_results)
+    results = open(result, 'r')
+    results = json.load(results)
     correct = 0
     all_letters = 0
     for key, value in data.items():
